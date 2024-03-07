@@ -1,0 +1,97 @@
+<!-- Computed properties allow us to declaratively compute derived values.
+However, there are cases where we need to perform "side effects" in reaction to state
+changes - for example, mutating the DOM, or changing another piece of state based on the result of an async operation.
+With the Options API, we can use the watch option to trigger a function whenever a reactive property changes -->
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Vue exercise - async changes</title>
+        <!-- Stylesheet to format tasks -->
+        <style>
+            * {
+              box-sizing: border-box;
+            }
+    
+            .column {
+              float: left;
+              width: 33.33%;
+              padding: 10px;
+              height: 300px;
+            }
+        </style>
+    </head>
+    <body>
+        <div id="app">
+            <div>
+                Place your question
+                <input v-model="question" v-bind:disabled="loading" />
+                {{tip}}
+            </div>
+            <div class="row">
+                <div class="column" style="background-color:#aaa;">
+                  <h2>Answer</h2>
+                  <p>{{answer.value}}</p>
+                </div>
+            </div>
+            <div class="row">
+                <div class="column" style="background-color:#bbb;">
+                  <h2>Forced answer?</h2>
+                  <p>{{answer.forced}}</p>
+                </div>
+            </div>
+            <div class="row">
+                <div class="column">
+                    <img :src=answer.image>
+                </div>
+            </div>
+        </div>
+        <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+        <script>
+            Vue.createApp(
+                {
+                    data()
+                    {
+                        return{
+                            loading: false,
+                            question: '',
+                            tip: 'Please finish question with ?',
+                            answer:
+                            [
+                                {value: '', forced: false, image: ''}
+                            ]
+                        }
+                    },
+                    watch:
+                    {
+                        question(newQuestion, oldQuestion) {
+                            this.tip = 'Please finish question with ?'
+                            newQuestion.includes('?') ? this.getAnswer() : null
+                        }
+                    },
+                    methods:
+                    {
+                        async getAnswer()
+                        {
+                            this.loading = true
+                            this.tip = 'Thinking...'
+                            try {
+                                const api = await fetch('https://yesno.wtf/api')
+                                const apiResponse = await api.json()
+                                this.answer={value: apiResponse.answer, forced: apiResponse.forced, image: apiResponse.image}
+                            } catch (error) {
+                                this.answer={value: error, forced: false, image: 'error.png'}
+                            } finally {
+                                this.loading = false
+                                this.tip = ''
+                            }
+                        }
+                    }
+                }
+            )
+            .mount('#app');
+        </script>
+    </body>
+</html>
